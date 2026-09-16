@@ -1,0 +1,40 @@
+# ==============================================================================
+# Root-Level Monorepo .gitignore for Club-Connect
+# ==============================================================================
+
+# Node Modules (Catches both client, server, and root modules)
+**/node_modules/
+node_modules/
+
+# Frontend Build Outputs (Targeting Vite/CRA inside the client folder)
+client/dist/
+client/build/
+client/out/
+
+# Environment Secrets (Blocks backend and frontend env files)
+**/.*env
+**.env
+.env
+.env.local
+client/.env.local
+server/.env.local
+
+# CRITICAL: Always explicitly allow the example environment template files
+!**/.*env.example
+!**.env.example
+
+# Testing and Coverage
+**/coverage/
+.eslintcache
+
+# Logs
+*.log
+**/logs/
+npm-debug.log*
+yarn-debug.log*
+
+# OS & IDE Metadata
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
