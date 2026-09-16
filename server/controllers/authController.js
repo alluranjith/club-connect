@@ -41,7 +41,6 @@ const registerUser = asyncHandler(async (req, res) => {
     email: email.toLowerCase(),
     password,
     role: 'member',
-    membershipStatus: 'none',
   });
 
   const token = generateToken(user._id);
@@ -200,7 +199,6 @@ const sanitizeUser = (user) => ({
   email: user.email,
   role: user.role,
   club: user.club,
-  membershipStatus: user.membershipStatus,
   phone: user.phone,
   bio: user.bio,
   avatar: user.avatar,

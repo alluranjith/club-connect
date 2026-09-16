@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { FiMenu, FiX } from 'react-icons/fi';
-import { BsFillPeopleFill } from "react-icons/bs";
+import { FiMenu, FiX,FiUsers } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import ThemeToggle from '../common/ThemeToggle';
 
@@ -49,8 +48,8 @@ const Navbar = () => {
     <header className="navbar">
       <div className="navbar-inner">
         <NavLink to="/" className="navbar-logo" onClick={close} style={{display:'flex',gap:'5px'}}>
-        <BsFillPeopleFill  style={{ fontSize: 28, color: 'var(--color-primary)', marginBottom: 10 }} />
-       ClubConnect</NavLink>
+        <FiUsers  style={{ fontSize: 28, color: 'var(--color-primary)', marginBottom: 10 }} />
+        ClubConnect</NavLink>
 
         {/* Desktop links */}
         <nav className="navbar-links navbar-links-desktop">

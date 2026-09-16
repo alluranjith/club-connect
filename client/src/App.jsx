@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import IntroAnimation from './components/common/IntroAnimation';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import DashboardShell from './components/layout/DashboardShell';
@@ -34,6 +35,8 @@ import AllUsers from './modules/admin/AllUsers';
 import PresidentOverview from './modules/president/PresidentOverview';
 import JoinRequests from './modules/president/JoinRequests';
 import PresidentMembers from './modules/president/PresidentMembers';
+import PresidentCoordinators from './modules/president/PresidentCoordinators';
+import PresidentClubInfo from './modules/president/PresidentClubInfo';
 import PresidentNotifications from './modules/president/PresidentNotifications';
 import PresidentEvents from './modules/president/PresidentEvents';
 import PresidentGallery from './modules/president/PresidentGallery';
@@ -132,6 +135,16 @@ function AppRoutes() {
             <DashboardShell role="president"><PresidentMembers /></DashboardShell>
           </ProtectedRoute>
         } />
+        <Route path="/president/coordinators" element={
+          <ProtectedRoute allowedRoles={['president']}>
+            <DashboardShell role="president"><PresidentCoordinators /></DashboardShell>
+          </ProtectedRoute>
+        } />
+        <Route path="/president/club-info" element={
+          <ProtectedRoute allowedRoles={['president']}>
+            <DashboardShell role="president"><PresidentClubInfo /></DashboardShell>
+          </ProtectedRoute>
+        } />
         <Route path="/president/notifications" element={
           <ProtectedRoute allowedRoles={['president']}>
             <DashboardShell role="president"><PresidentNotifications /></DashboardShell>
@@ -219,6 +232,7 @@ function App() {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
+          <IntroAnimation />
           <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
           <AppRoutes />
         </AuthProvider>

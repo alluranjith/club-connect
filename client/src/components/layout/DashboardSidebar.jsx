@@ -21,6 +21,8 @@ const LINKS = {
     { to: '/president', label: 'Overview', icon: <FiGrid />, end: true },
     { to: '/president/requests', label: 'Join Requests', icon: <FiUserCheck /> },
     { to: '/president/members', label: 'Members', icon: <FiUsers /> },
+    { to: '/president/coordinators', label: 'Coordinators', icon: <FiClipboard /> },
+    { to: '/president/club-info', label: 'Club Info', icon: <FiClock /> },
     { to: '/president/notifications', label: 'Notifications', icon: <FiBell /> },
     { to: '/president/events', label: 'Events & Tracking', icon: <FiTrendingUp /> },
     { to: '/president/gallery', label: 'Gallery', icon: <FiImage /> },
