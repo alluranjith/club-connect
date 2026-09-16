@@ -32,7 +32,7 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="auth-page">
+    <div className="auth-page auth-page-simple">
       <div className="auth-card">
         <h2 className="section-title" style={{ textAlign: 'center' }}>Reset password</h2>
         <p className="section-subtitle" style={{ textAlign: 'center' }}>Choose a new password for your account.</p>

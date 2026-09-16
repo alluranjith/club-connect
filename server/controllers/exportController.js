@@ -44,7 +44,7 @@ const exportParticipation = asyncHandler(async (req, res) => {
 // @route GET /api/export/members/:clubId
 // @access Private/Admin,President,Coordinator
 const exportMembers = asyncHandler(async (req, res) => {
-  const club = await Club.findById(req.params.clubId).populate('members', 'name email phone membershipStatus');
+  const club = await Club.findById(req.params.clubId).populate('members', 'name email phone');
   if (!club) {
     res.status(404);
     throw new Error('Club not found');
@@ -53,9 +53,8 @@ const exportMembers = asyncHandler(async (req, res) => {
     Name: m.name,
     Email: m.email,
     Phone: m.phone,
-    Status: m.membershipStatus,
   }));
-  sendCsv(res, `members_${club.name}.csv`, rows.length ? rows : [{ Name: '', Email: '', Phone: '', Status: '' }]);
+  sendCsv(res, `members_${club.name}.csv`, rows.length ? rows : [{ Name: '', Email: '', Phone: '' }]);
 });
 
 module.exports = { exportAttendance, exportParticipation, exportMembers };

@@ -13,19 +13,11 @@ const userSchema = new mongoose.Schema(
       default: 'member',
       required: true,
     },
-    // For president/coordinator/member - which club they belong to / manage
+    // For president/coordinator - the single club they lead/support.
+    // NOTE: members do NOT use this field. A student can belong to multiple
+    // clubs at once, so membership is tracked per-club via Club.members[]
+    // and per-request via the JoinRequest collection, not as a single value here.
     club: { type: mongoose.Schema.Types.ObjectId, ref: 'Club', default: null },
-
-    // Membership lifecycle for role === 'member'
-    // 'none'      -> hasn't requested to join any club yet
-    // 'pending'   -> requested, awaiting admin/coordinator/president decision
-    // 'accepted'  -> full club member (has credentials/benefits)
-    // 'rejected'  -> rejected, can still browse & request participation in events (non-club member)
-    membershipStatus: {
-      type: String,
-      enum: ['none', 'pending', 'accepted', 'rejected'],
-      default: 'none',
-    },
 
     phone: { type: String, default: '' },
     avatar: { type: String, default: '' },

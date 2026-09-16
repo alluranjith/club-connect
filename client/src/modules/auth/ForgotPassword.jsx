@@ -23,7 +23,7 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="auth-page">
+    <div className="auth-page auth-page-simple">
       <div className="auth-card">
         {sent ? (
           <div style={{ textAlign: 'center' }} className="animate-popIn">

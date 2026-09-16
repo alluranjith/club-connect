@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { FiPlus, FiTrash2, FiUserPlus, FiDownload } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiUserPlus, FiDownload, FiEdit2 } from 'react-icons/fi';
 import { ClubAPI, ExportAPI } from '../../api/endpoints';
 import Modal from '../../components/common/Modal';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
@@ -9,6 +9,7 @@ import Loader from '../../components/common/Loader';
 import ImageUploader from '../../components/common/ImageUploader';
 
 const emptyForm = { name: '', description: '', category: 'General', coverImage: '', presidentEmail: '' };
+const emptyEditForm = { name: '', description: '', category: '', coverImage: '' };
 
 const ManageClubs = () => {
   const [clubs, setClubs] = useState([]);
@@ -18,7 +19,10 @@ const ManageClubs = () => {
   const [toDisband, setToDisband] = useState(null);
   const [assignTarget, setAssignTarget] = useState(null);
   const [presidentEmail, setPresidentEmail] = useState('');
+  const [editTarget, setEditTarget] = useState(null);
+  const [editForm, setEditForm] = useState(emptyEditForm);
   const [submitting, setSubmitting] = useState(false);
+  const [editSubmitting, setEditSubmitting] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -66,6 +70,31 @@ const ManageClubs = () => {
     }
   };
 
+  const openEdit = (club) => {
+    setEditTarget(club);
+    setEditForm({
+      name: club.name,
+      description: club.description || '',
+      category: club.category || '',
+      coverImage: club.coverImage || '',
+    });
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setEditSubmitting(true);
+    try {
+      await ClubAPI.update(editTarget._id, editForm);
+      toast.success('Club details updated');
+      setEditTarget(null);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update club');
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
   return (
     <div className="animate-fadeIn">
       <div className="flex-between" style={{ marginBottom: 20 }}>
@@ -95,6 +124,9 @@ const ManageClubs = () => {
                 Coordinators: {club.coordinators?.length || 0}
               </p>
               <div className="flex gap-sm" style={{ marginTop: 12, flexWrap: 'wrap' }}>
+                <button className="btn btn-secondary btn-sm" onClick={() => openEdit(club)}>
+                  <FiEdit2 /> Edit
+                </button>
                 <button className="btn btn-secondary btn-sm" onClick={() => setAssignTarget(club)}>
                   <FiUserPlus /> Set President
                 </button>
@@ -151,6 +183,33 @@ const ManageClubs = () => {
               <input className="input" type="email" required value={presidentEmail} onChange={(e) => setPresidentEmail(e.target.value)} />
             </div>
             <button className="btn btn-primary btn-block">Assign President</button>
+          </form>
+        </Modal>
+      )}
+
+      {editTarget && (
+        <Modal title={`Edit ${editTarget.name}`} onClose={() => setEditTarget(null)}>
+          <form onSubmit={handleEditSubmit}>
+            <div className="form-group">
+              <label className="form-label">Club name</label>
+              <input className="input" required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Category</label>
+              <input className="input" value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Description</label>
+              <textarea className="input" rows={3} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
+            </div>
+            <ImageUploader
+              label="Cover image"
+              value={editForm.coverImage}
+              onChange={(url) => setEditForm({ ...editForm, coverImage: url })}
+            />
+            <button className="btn btn-primary btn-block" disabled={editSubmitting}>
+              {editSubmitting ? 'Saving...' : 'Save changes'}
+            </button>
           </form>
         </Modal>
       )}

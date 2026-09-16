@@ -10,7 +10,7 @@ const seedAdmin = async () => {
   const email = (process.env.ADMIN_EMAIL || 'admin@clubconnect.com').toLowerCase();
   const password = process.env.ADMIN_PASSWORD || 'Admin@12345';
 
-  await User.create({ name, email, password, role: 'admin', membershipStatus: 'accepted' });
+  await User.create({ name, email, password, role: 'admin' });
   console.log(`Seeded single admin account -> ${email} (change password after first login!)`);
 };
 

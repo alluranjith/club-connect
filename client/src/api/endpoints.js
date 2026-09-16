@@ -23,6 +23,7 @@ export const ClubAPI = {
   requestToJoin: (id, data) => api.post(`/clubs/${id}/join`, data),
   getJoinRequests: (id) => api.get(`/clubs/${id}/join-requests`),
   decideJoinRequest: (requestId, decision) => api.put(`/clubs/join-requests/${requestId}`, { decision }),
+  myStatus: () => api.get('/clubs/my/status'),
 };
 
 export const EventAPI = {
