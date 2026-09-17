@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   FiUser, FiMail, FiLock, FiShield, FiUsers, FiUserCheck, FiInfo,
-  FiUserPlus, FiAward, FiCompass,
+  FiUserPlus, FiAward, FiCompass, FiEye, FiEyeOff,
 } from 'react-icons/fi';
 import { AuthAPI } from '../../api/endpoints';
 import { useAuth } from '../../context/AuthContext';
@@ -31,6 +31,8 @@ const FEATURES = [
 const Register = () => {
   const [selectedRole, setSelectedRole] = useState('member');
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -111,17 +113,81 @@ const Register = () => {
                 <label className="form-label"><FiUser /> Full name</label>
                 <input type="text" name="name" className="input" required placeholder="Jane Doe" value={form.name} onChange={handleChange} />
               </div>
+
               <div className="form-group">
                 <label className="form-label"><FiMail /> Email</label>
                 <input type="email" name="email" className="input" required placeholder="you@example.com" value={form.email} onChange={handleChange} />
               </div>
+
               <div className="form-group">
                 <label className="form-label"><FiLock /> Password</label>
-                <input type="password" name="password" className="input" required minLength={6} placeholder="At least 6 characters" value={form.password} onChange={handleChange} />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    className="input"
+                    required
+                    minLength={6}
+                    placeholder="At least 6 characters"
+                    value={form.password}
+                    onChange={handleChange}
+                    style={{ width: '100%', paddingRight: '2.5rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--color-text-muted, #6b7280)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 0,
+                    }}
+                  >
+                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </button>
+                </div>
               </div>
+
               <div className="form-group">
                 <label className="form-label"><FiLock /> Confirm password</label>
-                <input type="password" name="confirm" className="input" required placeholder="Re-enter password" value={form.confirm} onChange={handleChange} />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    name="confirm"
+                    className="input"
+                    required
+                    placeholder="Re-enter password"
+                    value={form.confirm}
+                    onChange={handleChange}
+                    style={{ width: '100%', paddingRight: '2.5rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--color-text-muted, #6b7280)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 0,
+                    }}
+                  >
+                    {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </button>
+                </div>
               </div>
 
               <button className="btn btn-primary btn-block" disabled={loading}>
