@@ -139,9 +139,9 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email: email?.toLowerCase() });
 
-  // Always respond success (don't leak which emails exist)
   if (!user) {
-    return res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+    res.status(404);
+    throw new Error('No account exists with this email');
   }
 
   const resetToken = user.getResetPasswordToken();
@@ -157,7 +157,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
   try {
     await sendEmail({ to: user.email, subject: 'ClubConnect - Password Reset', html });
-    res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+    res.json({ success: true, message: 'Reset link sent to your email.' });
   } catch (err) {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;

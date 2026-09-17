@@ -16,7 +16,8 @@ const ForgotPassword = () => {
       await AuthAPI.forgotPassword({ email });
       setSent(true);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Something went wrong');
+      const message = err.response?.data?.message;
+      toast.error(message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -30,7 +31,7 @@ const ForgotPassword = () => {
             <FiCheckCircle size={48} color="var(--color-success)" />
             <h2 className="section-title" style={{ marginTop: 14 }}>Check your email</h2>
             <p className="section-subtitle">
-              If an account exists for <strong>{email}</strong>, a password reset link has been sent.
+              A password reset link has been sent to <strong>{email}</strong>.
             </p>
             <Link to="/login" className="btn btn-primary btn-block">Back to login</Link>
           </div>
