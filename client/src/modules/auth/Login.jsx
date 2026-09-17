@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   FiMail, FiLock, FiShield, FiUsers, FiUserCheck, FiUser,
-  FiCalendar, FiImage, FiBell,
+  FiCalendar, FiImage, FiBell, FiEye, FiEyeOff,
 } from 'react-icons/fi';
 import { AuthAPI } from '../../api/endpoints';
 import { useAuth } from '../../context/AuthContext';
@@ -25,6 +25,7 @@ const FEATURES = [
 const Login = () => {
   const [selectedRole, setSelectedRole] = useState('member');
   const [form, setForm] = useState({ email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -84,12 +85,40 @@ const Login = () => {
                 placeholder="you@example.com" value={form.email} onChange={handleChange}
               />
             </div>
+
             <div className="form-group">
               <label className="form-label"><FiLock /> Password</label>
-              <input
-                type="password" name="password" className="input" required
-                placeholder="••••••••" value={form.password} onChange={handleChange}
-              />
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  className="input"
+                  required
+                  placeholder="••••••••"
+                  value={form.password}
+                  onChange={handleChange}
+                  style={{ width: '100%', paddingRight: '2.5rem' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--color-text-muted, #6b7280)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 0,
+                  }}
+                >
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </button>
+              </div>
             </div>
 
             <div className="flex-between" style={{ marginBottom: 20 }}>
