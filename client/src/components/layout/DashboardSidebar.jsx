@@ -68,13 +68,7 @@ const DashboardSidebar = ({ role, mobileOpen, onClose }) => {
             {link.icon} {link.label}
           </NavLink>
         ))}
-        <button
-          onClick={() => { logout(); navigate('/login'); }}
-          className="btn btn-outline btn-sm btn-block"
-          style={{ marginTop: 20 }}
-        >
-          <FiLogOut /> Logout
-        </button>
+        
       </aside>
     </>
   );
