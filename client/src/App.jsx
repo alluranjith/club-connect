@@ -30,6 +30,7 @@ import AdminNotifications from './modules/admin/AdminNotifications';
 import AdminEvents from './modules/admin/AdminEvents';
 import AdminGallery from './modules/admin/AdminGallery';
 import AllUsers from './modules/admin/AllUsers';
+import AdminAnalytics from './modules/admin/AdminAnalytics';
 
 // President
 import PresidentOverview from './modules/president/PresidentOverview';
@@ -40,6 +41,7 @@ import PresidentClubInfo from './modules/president/PresidentClubInfo';
 import PresidentNotifications from './modules/president/PresidentNotifications';
 import PresidentEvents from './modules/president/PresidentEvents';
 import PresidentGallery from './modules/president/PresidentGallery';
+import PresidentAnalytics from './modules/president/PresidentAnalytics';
 
 // Coordinator
 import CoordinatorOverview from './modules/coordinator/CoordinatorOverview';
@@ -118,6 +120,11 @@ function AppRoutes() {
             <DashboardShell role="admin"><AllUsers /></DashboardShell>
           </ProtectedRoute>
         } />
+        <Route path="/admin/analytics" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <DashboardShell role="admin"><AdminAnalytics /></DashboardShell>
+          </ProtectedRoute>
+        } />
 
         {/* ---------------- President ---------------- */}
         <Route path="/president" element={
@@ -158,6 +165,11 @@ function AppRoutes() {
         <Route path="/president/gallery" element={
           <ProtectedRoute allowedRoles={['president']}>
             <DashboardShell role="president"><PresidentGallery /></DashboardShell>
+          </ProtectedRoute>
+        } />
+        <Route path="/president/analytics" element={
+          <ProtectedRoute allowedRoles={['president']}>
+            <DashboardShell role="president"><PresidentAnalytics /></DashboardShell>
           </ProtectedRoute>
         } />
 

@@ -4,6 +4,21 @@ import { ClubAPI, EventAPI } from '../../api/endpoints';
 import { useAuth } from '../../context/AuthContext';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
+import DashboardHero from '../../components/common/DashboardHero';
+
+const StatCard = ({ icon, label, value, color }) => (
+  <div className="card">
+    <div className="flex-between">
+      <div>
+        <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>{label}</p>
+        <h2 style={{ margin: 0 }}>{value}</h2>
+      </div>
+      <div className="stat-icon-badge" style={{ background: `color-mix(in srgb, ${color} 16%, transparent)`, color }}>
+        {icon}
+      </div>
+    </div>
+  </div>
+);
 
 const PresidentOverview = () => {
   const { user } = useAuth();
@@ -24,13 +39,16 @@ const PresidentOverview = () => {
 
   return (
     <div className="animate-fadeIn">
-      <h1 className="section-title">{club.name}</h1>
-      <p className="section-subtitle">Welcome back, {user.name}. Here's how your club is doing.</p>
+      <DashboardHero
+        title={club.name}
+        subtitle={`Welcome back, ${user.name}. Here's how your club is doing.`}
+        chips={[`${club.members?.length || 0} members`, `${events.length} events`]}
+      />
 
       <div className="grid grid-3 stagger">
-        <div className="card"><div className="flex-between"><div><p style={{ margin: 0, color: 'var(--color-text-muted)' }}>Members</p><h2 style={{ margin: 0 }}>{club.members?.length || 0}</h2></div><FiUsers size={26} color="var(--color-president)" /></div></div>
-        <div className="card"><div className="flex-between"><div><p style={{ margin: 0, color: 'var(--color-text-muted)' }}>Coordinators</p><h2 style={{ margin: 0 }}>{club.coordinators?.length || 0}</h2></div><FiUserCheck size={26} color="var(--color-coordinator)" /></div></div>
-        <div className="card"><div className="flex-between"><div><p style={{ margin: 0, color: 'var(--color-text-muted)' }}>Events</p><h2 style={{ margin: 0 }}>{events.length}</h2></div><FiCalendar size={26} color="var(--color-admin)" /></div></div>
+        <StatCard icon={<FiUsers />} label="Members" value={club.members?.length || 0} color="var(--color-president)" />
+        <StatCard icon={<FiUserCheck />} label="Coordinators" value={club.coordinators?.length || 0} color="var(--color-coordinator)" />
+        <StatCard icon={<FiCalendar />} label="Events" value={events.length} color="var(--color-admin)" />
       </div>
     </div>
   );

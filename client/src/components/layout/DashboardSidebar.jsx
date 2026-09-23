@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import {
   FiGrid, FiUsers, FiCalendar, FiBell, FiImage, FiUserCheck,
-  FiTrendingUp, FiUser, FiClipboard, FiLogOut, FiClock, FiX,
+  FiTrendingUp, FiUser, FiClipboard, FiLogOut, FiClock, FiX, FiBarChart2,
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +16,7 @@ const LINKS = {
     { to: '/admin/events', label: 'Events & Tracking', icon: <FiTrendingUp /> },
     { to: '/admin/gallery', label: 'Gallery', icon: <FiImage /> },
     { to: '/admin/users', label: 'All Users', icon: <FiClipboard /> },
+    { to: '/admin/analytics', label: 'Analytics', icon: <FiBarChart2 /> },
   ],
   president: [
     { to: '/president', label: 'Overview', icon: <FiGrid />, end: true },
@@ -26,6 +27,7 @@ const LINKS = {
     { to: '/president/notifications', label: 'Notifications', icon: <FiBell /> },
     { to: '/president/events', label: 'Events & Tracking', icon: <FiTrendingUp /> },
     { to: '/president/gallery', label: 'Gallery', icon: <FiImage /> },
+    { to: '/president/analytics', label: 'Analytics', icon: <FiBarChart2 /> },
   ],
   coordinator: [
     { to: '/coordinator', label: 'Overview', icon: <FiGrid />, end: true },
@@ -66,7 +68,13 @@ const DashboardSidebar = ({ role, mobileOpen, onClose }) => {
             {link.icon} {link.label}
           </NavLink>
         ))}
-        
+        <button
+          onClick={() => { logout(); navigate('/login'); }}
+          className="btn btn-outline btn-sm btn-block"
+          style={{ marginTop: 20 }}
+        >
+          <FiLogOut /> Logout
+        </button>
       </aside>
     </>
   );
