@@ -17,6 +17,7 @@ const exportRoutes = require('./routes/exportRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const imageRoutes = require('./routes/imageRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/export', exportRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/images', imageRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // ---- Error handling ----
 app.use(notFound);
