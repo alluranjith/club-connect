@@ -75,3 +75,8 @@ export const ImageAPI = {
 export const PublicAPI = {
   stats: () => api.get('/public/stats'),
 };
+
+export const AnalyticsAPI = {
+  club: (clubId) => api.get(`/analytics/club/${clubId}`),
+  overview: () => api.get('/analytics/overview'),
+};

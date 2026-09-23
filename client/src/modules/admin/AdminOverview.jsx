@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FiUsers, FiUserCheck, FiCalendar, FiImage, FiShield } from 'react-icons/fi';
 import { AdminAPI } from '../../api/endpoints';
 import Loader from '../../components/common/Loader';
+import DashboardHero from '../../components/common/DashboardHero';
 
 const StatCard = ({ icon, label, value, color }) => (
   <div className="card animate-popIn">
@@ -10,7 +11,9 @@ const StatCard = ({ icon, label, value, color }) => (
         <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', margin: 0 }}>{label}</p>
         <h2 style={{ margin: '6px 0 0' }}>{value}</h2>
       </div>
-      <div style={{ fontSize: 26, color }}>{icon}</div>
+      <div className="stat-icon-badge" style={{ background: `color-mix(in srgb, ${color} 16%, transparent)`, color }}>
+        {icon}
+      </div>
     </div>
   </div>
 );
@@ -26,8 +29,11 @@ const AdminOverview = () => {
 
   return (
     <div className="animate-fadeIn">
-      <h1 className="section-title">Admin Overview</h1>
-      <p className="section-subtitle">Platform-wide snapshot of clubs, people and activity.</p>
+      <DashboardHero
+        title="Admin Overview"
+        subtitle="Platform-wide snapshot of clubs, people and activity."
+        chips={[`${stats.activeClubs} active clubs`, `${stats.totalUsers} total users`, `${stats.upcomingEvents} upcoming events`]}
+      />
 
       <div className="grid grid-4 stagger" style={{ marginBottom: 30 }}>
         <StatCard icon={<FiShield />} label="Active Clubs" value={stats.activeClubs} color="var(--color-admin)" />
