@@ -629,7 +629,7 @@ img {
 }
 .navbar-inner {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1500px;
   margin: 0 auto;
   padding: 0 20px;
   height: var(--navbar-height);
@@ -868,13 +868,6 @@ img {
   overflow: hidden;
 }
 .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); }
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 2px, transparent 2px 22px);
-  animation: shimmer 6s linear infinite;
-}
 
 /* Hero stats mini-panel */
 .hero-stats {

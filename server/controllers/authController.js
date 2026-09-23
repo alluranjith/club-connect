@@ -148,12 +148,67 @@ const forgotPassword = asyncHandler(async (req, res) => {
   await user.save({ validateBeforeSave: false });
 
   const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
-  const html = `
-    <p>Hello ${user.name},</p>
-    <p>You requested a password reset for your ClubConnect account.</p>
-    <p><a href="${resetUrl}">Click here to reset your password</a> (valid for 30 minutes).</p>
-    <p>If you didn't request this, ignore this email.</p>
-  `;
+ const html = `
+  <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e4e7eb; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+    
+    <!-- Header Banner -->
+    <div style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); padding: 35px 20px; text-align: center;">
+      <div style="font-size: 28px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; margin-bottom: 8px;">
+        ⚡ ClubConnect
+      </div>
+      <div style="color: #e0e7ff; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">
+        Securing Your Account
+      </div>
+    </div>
+
+    <!-- Body Content -->
+    <div style="padding: 40px 30px; background-color: #ffffff;">
+      <h2 style="color: #1f2937; font-size: 22px; font-weight: 700; margin-top: 0; margin-bottom: 16px;">
+        Password Reset Request
+      </h2>
+      
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 12px;">
+        Hello <strong style="color: #111827;">${user.name}</strong>,
+      </p>
+      
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+        We received a request to reset the password associated with your ClubConnect account. No changes have been made yet. You can securely reset your password by clicking the button below:
+      </p>
+
+      <!-- Central Action Button -->
+      <div style="text-align: center; margin: 35px 0;">
+        <a href="${resetUrl}" style="background-color: #4f46e5; color: #ffffff; padding: 14px 32px; text-decoration: none; font-weight: 700; font-size: 16px; border-radius: 8px; display: inline-block; transition: background-color 0.2s ease; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);">
+          Reset My Password
+        </a>
+      </div>
+
+      <!-- Time Expiry & Info Alert Box -->
+      <div style="background-color: #f3f4f6; border-left: 4px solid #6366f1; padding: 16px; border-radius: 4px 8px 8px 4px; margin-bottom: 30px;">
+        <p style="color: #374151; font-size: 14px; line-height: 1.5; margin: 0;">
+          ⏱️ <strong>Important Notice:</strong> For security purposes, this link will automatically expire in <strong>30 minutes</strong> and can only be used once.
+        </p>
+      </div>
+
+      <!-- Security Fallback Link -->
+      <p style="color: #9ca3af; font-size: 13px; line-height: 1.5; margin-bottom: 0;">
+        If the button above isn't working, copy and paste this absolute URL into your web browser:<br>
+        <a href="${resetUrl}" style="color: #4f46e5; text-decoration: underline; word-break: break-all;">${resetUrl}</a>
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color: #f9fafb; padding: 24px 30px; text-align: center; border-top: 1px solid #f3f4f6;">
+      <p style="color: #6b7280; font-size: 13px; line-height: 1.5; margin: 0 0 8px 0;">
+        <strong>Didn't request this?</strong> If you didn't ask to reset your password, you can safely ignore or delete this email. Your account remains fully secure.
+      </p>
+      <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+        &copy; ${new Date().getFullYear()} ClubConnect. All rights reserved.
+      </p>
+    </div>
+
+  </div>
+`;
+
 
   try {
     await sendEmail({ to: user.email, subject: 'ClubConnect - Password Reset', html });
