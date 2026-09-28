@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://club-connect-9koc.onrender.com/api/:path*"
+    }
+  ]
+}
