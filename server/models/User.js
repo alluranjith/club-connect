@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema(
     avatar: { type: String, default: '' },
     bio: { type: String, default: '' },
 
+    googleId: { type: String, default: undefined, index: { unique: true, sparse: true } },
+    // true once the user has saved name + photo + 10-digit mobile through the profile form
+    profileCompleted: { type: Boolean, default: false },
+
     isActive: { type: Boolean, default: true },
 
     resetPasswordToken: { type: String },

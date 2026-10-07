@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import { FiLock } from 'react-icons/fi';
 import { AuthAPI } from '../../api/endpoints';
 import { useAuth } from '../../context/AuthContext';
+import { isStrongPassword } from '../../utils/password';
+import PasswordRules from '../../components/common/PasswordRules';
 
 const ResetPassword = () => {
   const { token } = useParams();
@@ -16,6 +18,10 @@ const ResetPassword = () => {
     e.preventDefault();
     if (form.password !== form.confirm) {
       toast.error('Passwords do not match');
+      return;
+    }
+    if (!isStrongPassword(form.password)) {
+      toast.error('Password does not meet all the rules');
       return;
     }
     setLoading(true);
@@ -40,9 +46,10 @@ const ResetPassword = () => {
           <div className="form-group">
             <label className="form-label"><FiLock /> New password</label>
             <input
-              type="password" className="input" required minLength={6} placeholder="At least 6 characters"
+              type="password" className="input" required placeholder="New password"
               value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
             />
+            <PasswordRules value={form.password} />
           </div>
           <div className="form-group">
             <label className="form-label"><FiLock /> Confirm new password</label>

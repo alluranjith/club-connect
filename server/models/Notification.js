@@ -4,6 +4,7 @@ const notificationSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     message: { type: String, required: true },
+    image: { type: String, default: '' }, // optional picture; text-only when empty
     type: { type: String, enum: ['event', 'general', 'club', 'alert'], default: 'general' },
     club: { type: mongoose.Schema.Types.ObjectId, ref: 'Club', default: null }, // null = platform-wide (admin)
     event: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', default: null },

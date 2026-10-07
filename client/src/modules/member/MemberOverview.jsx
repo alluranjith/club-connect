@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
 import { FiUserPlus, FiCheckCircle, FiClock } from 'react-icons/fi';
 import { ClubAPI } from '../../api/endpoints';
 import { useAuth } from '../../context/AuthContext';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
+import JoinRequestModal from '../../components/common/JoinRequestModal';
 
 const MemberOverview = () => {
   const { user } = useAuth();
@@ -12,7 +12,7 @@ const MemberOverview = () => {
   const [myClubs, setMyClubs] = useState([]);
   const [pendingClubIds, setPendingClubIds] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [joining, setJoining] = useState(null);
+  const [joinClub, setJoinClub] = useState(null); // club the student is writing a join request for
 
   const load = () => {
     setLoading(true);
@@ -25,19 +25,6 @@ const MemberOverview = () => {
       .finally(() => setLoading(false));
   };
   useEffect(() => { load(); }, []);
-
-  const handleJoin = async (clubId) => {
-    setJoining(clubId);
-    try {
-      await ClubAPI.requestToJoin(clubId, {});
-      toast.success('Join request sent! Await approval from the club.');
-      load();
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Could not send join request');
-    } finally {
-      setJoining(null);
-    }
-  };
 
   if (loading) return <Loader />;
 
@@ -63,7 +50,7 @@ const MemberOverview = () => {
           <div className="grid grid-3 stagger">
             {myClubs.map((club) => (
               <div className="card" key={club._id}>
-                {club.coverImage && <img src={club.coverImage} alt={club.name} style={{ borderRadius: 10, height: 120, objectFit: 'cover', marginBottom: 10 }} />}
+                {club.coverImage && <img src={club.coverImage} alt={club.name} style={{ borderRadius: 0, height: 120, objectFit: 'cover', marginBottom: 10 }} />}
                 <h4>{club.name}</h4>
                 <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', minHeight: 36 }}>{club.description || 'No description yet.'}</p>
                 <span className="badge badge-success"><FiCheckCircle /> Member</span>
@@ -97,17 +84,18 @@ const MemberOverview = () => {
           <div className="grid grid-3 stagger">
             {browsableClubs.map((club) => (
               <div className="card" key={club._id}>
-                {club.coverImage && <img src={club.coverImage} alt={club.name} style={{ borderRadius: 10, height: 130, objectFit: 'cover', marginBottom: 10 }} />}
+                {club.coverImage && <img src={club.coverImage} alt={club.name} style={{ borderRadius: 0, height: 130, objectFit: 'cover', marginBottom: 10 }} />}
                 <h4>{club.name}</h4>
                 <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', minHeight: 36 }}>{club.description || 'No description yet.'}</p>
-                <button className="btn btn-primary btn-sm" onClick={() => handleJoin(club._id)} disabled={joining === club._id}>
-                  <FiUserPlus /> {joining === club._id ? 'Sending...' : 'Request to Join'}
+                <button className="btn btn-primary btn-sm" onClick={() => setJoinClub(club)}>
+                  <FiUserPlus /> Request to Join
                 </button>
               </div>
             ))}
           </div>
         )}
       </div>
+      {joinClub && <JoinRequestModal club={joinClub} onClose={() => setJoinClub(null)} onSent={load} />}
     </div>
   );
 };

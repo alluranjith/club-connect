@@ -1,6 +1,10 @@
 import api from './axios';
 
 export const AuthAPI = {
+  config: () => api.get('/auth/config'),
+  checkEmail: (email) => api.post('/auth/check-email', { email }),
+  sendOtp: (email) => api.post('/auth/send-otp', { email }),
+  googleLogin: (credential) => api.post('/auth/google', { credential }),
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
   me: () => api.get('/auth/me'),
@@ -19,6 +23,12 @@ export const ClubAPI = {
   assignPresident: (id, data) => api.put(`/clubs/${id}/president`, data),
   addCoordinator: (id, data) => api.post(`/clubs/${id}/coordinators`, data),
   removeCoordinator: (id, userId) => api.delete(`/clubs/${id}/coordinators/${userId}`),
+  getMembers: (id) => api.get(`/clubs/${id}/members`),
+  getTeam: (id) => api.get(`/clubs/${id}/team`),
+  lookupTeamUser: (id, email) => api.get(`/clubs/${id}/team/lookup`, { params: { email } }),
+  addTeamMember: (id, data) => api.post(`/clubs/${id}/team`, data),
+  updateTeamMember: (id, memberId, data) => api.put(`/clubs/${id}/team/${memberId}`, data),
+  removeTeamMember: (id, memberId) => api.delete(`/clubs/${id}/team/${memberId}`),
   removeMember: (id, userId) => api.delete(`/clubs/${id}/members/${userId}`),
   requestToJoin: (id, data) => api.post(`/clubs/${id}/join`, data),
   getJoinRequests: (id) => api.get(`/clubs/${id}/join-requests`),
@@ -52,16 +62,27 @@ export const GalleryAPI = {
 
 export const AttendanceAPI = {
   mark: (data) => api.post('/attendance', data),
+  markBulk: (data) => api.post('/attendance/bulk', data),
   forEvent: (eventId) => api.get(`/attendance/event/${eventId}`),
 };
 
 export const ExportAPI = {
-  attendanceCsvUrl: (eventId) => `/api/export/attendance/${eventId}`,
-  participationCsvUrl: (eventId) => `/api/export/participation/${eventId}`,
-  membersCsvUrl: (clubId) => `/api/export/members/${clubId}`,
+  attendanceCsvUrl: (eventId) => `/export/attendance/${eventId}`,
+  participationCsvUrl: (eventId) => `/export/participation/${eventId}`,
+  membersCsvUrl: (clubId) => `/export/members/${clubId}`,
 };
 
 export const AdminAPI = {
+  userDetails: (id) => api.get(`/admin/users/${id}`),
+  allowedEmails: (params) => api.get('/admin/allowed-emails', { params }),
+  addAllowedEmail: (data) => api.post('/admin/allowed-emails', data),
+  deleteAllowedEmail: (id) => api.delete(`/admin/allowed-emails/${id}`),
+  importAllowedEmails: (file, mode) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('mode', mode);
+    return api.post('/admin/allowed-emails/import', fd);
+  },
   stats: () => api.get('/admin/stats'),
   users: (params) => api.get('/admin/users', { params }),
   setUserStatus: (id, isActive) => api.put(`/admin/users/${id}/status`, { isActive }),

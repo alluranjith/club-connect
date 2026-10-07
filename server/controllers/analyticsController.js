@@ -5,6 +5,7 @@ const Event = require('../models/Event');
 const Attendance = require('../models/Attendance');
 const Participation = require('../models/Participation');
 const JoinRequest = require('../models/JoinRequest');
+const { syncEventStatuses } = require('../utils/eventStatus');
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -93,6 +94,7 @@ const buildClubAnalytics = async (club) => {
 // @route GET /api/analytics/club/:id
 // @access Private/Admin,President
 const getClubAnalytics = asyncHandler(async (req, res) => {
+  await syncEventStatuses();
   const club = await Club.findById(req.params.id).select('name members coordinators');
   if (!club) {
     res.status(404);
@@ -111,6 +113,7 @@ const getClubAnalytics = asyncHandler(async (req, res) => {
 // @route GET /api/analytics/overview
 // @access Private/Admin
 const getPlatformAnalytics = asyncHandler(async (req, res) => {
+  await syncEventStatuses();
   const clubs = await Club.find({ isActive: true }).select('name members coordinators');
 
   const perClub = await Promise.all(clubs.map(buildClubAnalytics));

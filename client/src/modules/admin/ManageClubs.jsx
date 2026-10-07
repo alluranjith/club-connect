@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { FiPlus, FiTrash2, FiUserPlus, FiDownload, FiEdit2 } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiUserPlus, FiDownload, FiEdit2, FiUsers } from 'react-icons/fi';
 import { ClubAPI, ExportAPI } from '../../api/endpoints';
+import { downloadFile } from '../../api/download';
+import MemberDetailModal from '../../components/common/MemberDetailModal';
 import Modal from '../../components/common/Modal';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import EmptyState from '../../components/common/EmptyState';
@@ -22,6 +24,17 @@ const ManageClubs = () => {
   const [editTarget, setEditTarget] = useState(null);
   const [editForm, setEditForm] = useState(emptyEditForm);
   const [submitting, setSubmitting] = useState(false);
+  const [membersOf, setMembersOf] = useState(null); // { club, members }
+  const [viewing, setViewing] = useState(null);
+
+  const openMembers = async (club) => {
+    try {
+      const res = await ClubAPI.getMembers(club._id);
+      setMembersOf({ club, members: res.data.members });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not load members');
+    }
+  };
   const [editSubmitting, setEditSubmitting] = useState(false);
 
   const load = () => {
@@ -130,9 +143,10 @@ const ManageClubs = () => {
                 <button className="btn btn-secondary btn-sm" onClick={() => setAssignTarget(club)}>
                   <FiUserPlus /> Set President
                 </button>
-                <a className="btn btn-outline btn-sm" href={ExportAPI.membersCsvUrl(club._id)} target="_blank" rel="noreferrer">
-                  <FiDownload /> Members
-                </a>
+                <button className="btn btn-outline btn-sm" onClick={() => openMembers(club)}><FiUsers /> Members</button>
+                <button className="btn btn-outline btn-sm" onClick={() => downloadFile(ExportAPI.membersCsvUrl(club._id), `${club.name.replace(/[^a-z0-9]+/gi, '_')}_members.csv`)}>
+                  <FiDownload /> Export
+                </button>
                 {club.isActive && (
                   <button className="btn btn-danger btn-sm" onClick={() => setToDisband(club)}>
                     <FiTrash2 /> Disband
@@ -223,6 +237,24 @@ const ManageClubs = () => {
           onClose={() => setToDisband(null)}
         />
       )}
+      {membersOf && !viewing && (
+        <Modal title={`${membersOf.club.name} - members (${membersOf.members.length})`} onClose={() => setMembersOf(null)} width={620}>
+          {membersOf.members.length === 0 ? <p>No members yet.</p> : (
+            <div className="table-scroll">
+              <table className="table table-clickable">
+                <thead><tr><th>Name</th><th>Email</th><th>Mobile</th></tr></thead>
+                <tbody>{membersOf.members.map((m) => (
+                  <tr key={m._id} onClick={() => setViewing(m)}><td>{m.name}</td><td>{m.email}</td><td>{m.phone || '-'}</td></tr>
+                ))}</tbody>
+              </table>
+            </div>
+          )}
+          <button className="btn btn-outline btn-block" style={{ marginTop: 14 }} onClick={() => downloadFile(ExportAPI.membersCsvUrl(membersOf.club._id), `${membersOf.club.name.replace(/[^a-z0-9]+/gi, '_')}_members.csv`)}>
+            <FiDownload /> Download list
+          </button>
+        </Modal>
+      )}
+      {viewing && <MemberDetailModal person={viewing} onClose={() => setViewing(null)} />}
     </div>
   );
 };

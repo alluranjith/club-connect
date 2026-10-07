@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   FiMail, FiLock, FiShield, FiUsers, FiUserCheck, FiUser,
@@ -8,6 +8,7 @@ import {
 import { AuthAPI } from '../../api/endpoints';
 import { useAuth } from '../../context/AuthContext';
 import AuthBanner from '../../components/common/AuthBanner';
+import GoogleButton from '../../components/common/GoogleButton';
 
 const ROLE_TABS = [
   { role: 'admin', label: 'Admin', icon: <FiShield /> },
@@ -29,6 +30,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const from = useLocation().state?.from; // e.g. the event page they wanted to join
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -39,7 +41,7 @@ const Login = () => {
       const res = await AuthAPI.login({ ...form, role: selectedRole });
       login(res.data.token, res.data.user);
       toast.success(`Welcome back, ${res.data.user.name}!`);
-      navigate(`/${res.data.user.role}`);
+      navigate(res.data.user.profileComplete ? from || `/${res.data.user.role}` : '/complete-profile');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed');
     } finally {
@@ -47,10 +49,21 @@ const Login = () => {
     }
   };
 
+  const googleLogin = async (credential) => {
+    try {
+      const res = await AuthAPI.googleLogin(credential);
+      login(res.data.token, res.data.user);
+      toast.success(`Welcome, ${res.data.user.name}!`);
+      navigate(res.data.user.profileComplete ? from || `/${res.data.user.role}` : '/complete-profile');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Google sign-in failed');
+    }
+  };
+
   return (
     <div className="auth-page">
       <AuthBanner
-        badge="👋 Welcome back"
+        badge=" Welcome back"
         title="Good to see you again."
         description="Log back in to catch up on notifications, upcoming events, and everything happening across your clubs."
         features={FEATURES}
@@ -132,6 +145,8 @@ const Login = () => {
               {loading ? 'Logging in...' : `Login as ${ROLE_TABS.find((t) => t.role === selectedRole).label}`}
             </button>
           </form>
+
+          <GoogleButton onCredential={googleLogin} />
 
           {selectedRole !== 'member' && (
             <p style={{ textAlign: 'center', marginTop: 16, fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>

@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const {
   getClubs,
+  lookupTeamUser,
+  getTeam,
+  getClubMembers,
+  addTeamMember,
+  updateTeamMember,
+  removeTeamMember,
   getClub,
   createClub,
   updateClub,
@@ -33,10 +39,18 @@ router.put('/:id/president', protect, authorize('admin'), assignPresident);
 router.post('/:id/coordinators', protect, authorize('admin', 'president'), addCoordinator);
 router.delete('/:id/coordinators/:userId', protect, authorize('admin', 'president'), removeCoordinator);
 
+// Team / role holders (no login) - admin or the club's president
+router.get('/:id/team/lookup', protect, authorize('admin', 'president'), lookupTeamUser);
+router.get('/:id/team', protect, authorize('admin', 'president'), getTeam);
+router.post('/:id/team', protect, authorize('admin', 'president'), addTeamMember);
+router.put('/:id/team/:memberId', protect, authorize('admin', 'president'), updateTeamMember);
+router.delete('/:id/team/:memberId', protect, authorize('admin', 'president'), removeTeamMember);
+
 // Admin / President / Coordinator (post club info)
 router.put('/:id', protect, authorize('admin', 'president', 'coordinator'), updateClub);
 
 // Admin / President (kick member)
+router.get('/:id/members', protect, authorize('admin', 'president'), getClubMembers);
 router.delete('/:id/members/:userId', protect, authorize('admin', 'president'), removeMember);
 
 // Member - request to join

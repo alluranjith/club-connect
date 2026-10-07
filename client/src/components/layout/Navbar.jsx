@@ -25,7 +25,7 @@ const Navbar = () => {
 
   const links = (
     <>
-      <NavLink to="/" end onClick={close}>Home</NavLink>
+      {!isAuthenticated && <NavLink to="/" end onClick={close}>Home</NavLink>}
       <NavLink to="/clubs" onClick={close}>Clubs</NavLink>
       <NavLink to="/gallery" onClick={close}>Gallery</NavLink>
       <NavLink to="/about" onClick={close}>About</NavLink>
@@ -38,7 +38,7 @@ const Navbar = () => {
       ) : (
         <>
           <NavLink to="/login" onClick={close} className="btn btn-outline btn-sm">Login</NavLink>
-          <NavLink to="/register" onClick={close} className="btn btn-primary btn-sm" style={{color:'white'}}>Sign Up</NavLink>
+          <NavLink to="/register" onClick={close} className="btn btn-primary btn-sm">Sign Up</NavLink>
         </>
       )}
     </>
@@ -47,9 +47,9 @@ const Navbar = () => {
   return (
     <header className="navbar">
       <div className="navbar-inner">
-        <NavLink to="/" className="navbar-logo" onClick={close} style={{display:'flex',gap:'5px'}}>
-        <FiUsers  style={{ fontSize: 28, color: 'var(--color-primary)', marginBottom: 10 }} />
-        ClubConnect</NavLink>
+        <NavLink to={isAuthenticated ? dashboardPathFor(user.role) : '/'} className="navbar-logo" onClick={close} style={{ display: 'flex', gap: 10 }}>
+          <FiUsers /> ClubConnect
+        </NavLink>
 
         {/* Desktop links */}
         <nav className="navbar-links navbar-links-desktop">

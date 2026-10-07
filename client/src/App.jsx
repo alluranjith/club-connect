@@ -12,7 +12,9 @@ import Loader from './components/common/Loader';
 import Home from './modules/public/Home';
 import AboutUs from './modules/public/AboutUs';
 import AboutClubs from './modules/public/AboutClubs';
-import ClubDetail from './modules/public/ClubDetail';
+import ClubSite from './modules/public/ClubSite';
+import NotificationManager from './components/shared/NotificationManager';
+import CompleteProfile from './modules/auth/CompleteProfile';
 import PublicGallery from './modules/public/PublicGallery';
 import NotFound from './modules/public/NotFound';
 
@@ -30,6 +32,7 @@ import AdminNotifications from './modules/admin/AdminNotifications';
 import AdminEvents from './modules/admin/AdminEvents';
 import AdminGallery from './modules/admin/AdminGallery';
 import AllUsers from './modules/admin/AllUsers';
+import AllowedEmails from './modules/admin/AllowedEmails';
 import AdminAnalytics from './modules/admin/AdminAnalytics';
 
 // President
@@ -63,6 +66,7 @@ import './styles/index.css';
 const RootRedirect = () => {
   const { isAuthenticated, user, loading } = useAuth();
   if (loading) return <Loader fullscreen />;
+  if (isAuthenticated && !user.profileComplete) return <Navigate to="/complete-profile" replace />;
   if (isAuthenticated) return <Navigate to={`/${user.role}`} replace />;
   return <Home />;
 };
@@ -75,7 +79,9 @@ function AppRoutes() {
         <Route path="/" element={<RootRedirect />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/clubs" element={<AboutClubs />} />
-        <Route path="/clubs/:id" element={<ClubDetail />} />
+        <Route path="/clubs/:id" element={<ClubSite />} />
+        <Route path="/clubs/:id/:tab" element={<ClubSite />} />
+        <Route path="/complete-profile" element={<ProtectedRoute><CompleteProfile /></ProtectedRoute>} />
         <Route path="/gallery" element={<PublicGallery />} />
 
         {/* ---------------- Auth (navbar/footer hidden here) ---------------- */}
@@ -152,6 +158,11 @@ function AppRoutes() {
             <DashboardShell role="president"><PresidentClubInfo /></DashboardShell>
           </ProtectedRoute>
         } />
+        <Route path="/president/attendance" element={
+          <ProtectedRoute allowedRoles={['president']}>
+            <DashboardShell role="president"><MarkAttendance /></DashboardShell>
+          </ProtectedRoute>
+        } />
         <Route path="/president/notifications" element={
           <ProtectedRoute allowedRoles={['president']}>
             <DashboardShell role="president"><PresidentNotifications /></DashboardShell>
@@ -199,6 +210,12 @@ function AppRoutes() {
             <DashboardShell role="coordinator"><CoordinatorGallery /></DashboardShell>
           </ProtectedRoute>
         } />
+        <Route path="/coordinator/notifications" element={
+          <ProtectedRoute allowedRoles={['coordinator']}>
+            <DashboardShell role="coordinator"><NotificationManager />
+            </DashboardShell>
+          </ProtectedRoute>
+        } />
 
         {/* ---------------- Member (accepted & non-club members share these routes) ---------------- */}
         <Route path="/member" element={
@@ -229,6 +246,27 @@ function AppRoutes() {
         <Route path="/member/profile" element={
           <ProtectedRoute allowedRoles={['member']}>
             <DashboardShell role="member"><MemberProfile /></DashboardShell>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/admin/allowed-emails" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <DashboardShell role="admin"><AllowedEmails /></DashboardShell>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/profile" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <DashboardShell role="admin"><MemberProfile /></DashboardShell>
+          </ProtectedRoute>
+        } />
+        <Route path="/president/profile" element={
+          <ProtectedRoute allowedRoles={['president']}>
+            <DashboardShell role="president"><MemberProfile /></DashboardShell>
+          </ProtectedRoute>
+        } />
+        <Route path="/coordinator/profile" element={
+          <ProtectedRoute allowedRoles={['coordinator']}>
+            <DashboardShell role="coordinator"><MemberProfile /></DashboardShell>
           </ProtectedRoute>
         } />
 
