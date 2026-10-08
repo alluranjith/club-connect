@@ -36,7 +36,7 @@ const MemberGallery = () => {
 
       {active && (
         <Modal title={active.club?.name || 'Photo'} onClose={() => setActive(null)} width={640}>
-          <img src={active.imageUrl} alt={active.caption} style={{ borderRadius: 10, marginBottom: 12 }} />
+          <img src={active.imageUrl} alt={active.caption} style={{ borderRadius: 0, marginBottom: 12 }} />
           <p style={{ color: 'var(--color-text-muted)' }}>{active.caption}</p>
         </Modal>
       )}

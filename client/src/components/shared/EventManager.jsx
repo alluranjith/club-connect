@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { FiPlus, FiTrash2, FiTrendingUp, FiDownload, FiEdit2 } from 'react-icons/fi';
 import { EventAPI, ExportAPI } from '../../api/endpoints';
+import { downloadFile } from '../../api/download';
 import Modal from '../common/Modal';
 import ConfirmDialog from '../common/ConfirmDialog';
 import EmptyState from '../common/EmptyState';
+import EventDetailModal from '../common/EventDetailModal';
+import StatusBadge, { isActiveEvent } from '../common/StatusBadge';
 import Loader from '../common/Loader';
 import ImageUploader from '../common/ImageUploader';
 
@@ -14,6 +17,8 @@ const EventManager = ({ clubId }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showPast, setShowPast] = useState(false);
+  const [openId, setOpenId] = useState(null);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [toDelete, setToDelete] = useState(null);
@@ -77,6 +82,12 @@ const EventManager = ({ clubId }) => {
     }
   };
 
+  // Events whose date has passed are completed automatically by the server and hidden here by default
+  const pastCount = events.filter((e) => !isActiveEvent(e)).length;
+  const visibleEvents = showPast
+    ? events
+    : events.filter(isActiveEvent).sort((a, b) => new Date(a.date) - new Date(b.date));
+
   return (
     <div>
       <div className="flex-between" style={{ marginBottom: 20 }}>
@@ -84,29 +95,40 @@ const EventManager = ({ clubId }) => {
         <button className="btn btn-primary" onClick={openCreate}><FiPlus /> New Event</button>
       </div>
 
-      {loading ? <Loader /> : events.length === 0 ? (
+      {pastCount > 0 && (
+        <button className="btn btn-outline btn-sm" style={{ marginBottom: 16 }} onClick={() => setShowPast(!showPast)}>
+          {showPast ? 'Hide past events' : `Show past events (${pastCount})`}
+        </button>
+      )}
+      {loading ? <Loader /> : visibleEvents.length === 0 ? (
         <EmptyState title="No events yet" subtitle="Create your first event to start tracking participation." />
       ) : (
         <div className="grid grid-3 stagger">
-          {events.map((ev) => (
-            <div className="card" key={ev._id}>
-              <span className="badge badge-success">{ev.status}</span>
+          {visibleEvents.map((ev) => (
+            <div className="card clickable-card" key={ev._id} onClick={() => setOpenId(ev._id)} style={!isActiveEvent(ev) ? { opacity: 0.65 } : undefined}>
+              <StatusBadge status={ev.status} />
               <h4 style={{ margin: '8px 0 4px' }}>{ev.title}</h4>
               <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
                 {new Date(ev.date).toLocaleString()} · {ev.venue || 'TBA'}
               </p>
-              <div className="flex gap-sm" style={{ marginTop: 12, flexWrap: 'wrap' }}>
+              <div className="flex gap-sm" style={{ marginTop: 12, flexWrap: 'wrap' }} onClick={(e) => e.stopPropagation()}>
                 <button className="btn btn-secondary btn-sm" onClick={() => openEdit(ev)}><FiEdit2 /> Edit</button>
                 <button className="btn btn-outline btn-sm" onClick={() => viewTracking(ev)}><FiTrendingUp /> Track</button>
-                <a className="btn btn-outline btn-sm" href={ExportAPI.participationCsvUrl(ev._id)} target="_blank" rel="noreferrer">
+                <button className="btn btn-outline btn-sm" onClick={() => downloadFile(ExportAPI.participationCsvUrl(ev._id), `${ev.title.replace(/[^a-z0-9]+/gi, '_')}_participants.csv`)}>
                   <FiDownload /> Export
-                </a>
-                <button className="btn btn-danger btn-sm" onClick={() => setToDelete(ev)}><FiTrash2 /></button>
+                </button>
+                {ev.status === 'upcoming' ? (
+                  <button className="btn btn-danger btn-sm" onClick={() => setToDelete(ev)} title="Delete (only possible before the event starts)"><FiTrash2 /></button>
+                ) : (
+                  <span className="badge badge-muted" title="Past events are kept as club history">Kept in history</span>
+                )}
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {openId && <EventDetailModal eventId={openId} onClose={() => setOpenId(null)} />}
 
       {showForm && (
         <Modal title={editing ? 'Edit event' : 'Create event'} onClose={() => setShowForm(false)}>

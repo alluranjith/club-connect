@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import {
   FiGrid, FiUsers, FiCalendar, FiBell, FiImage, FiUserCheck,
-  FiTrendingUp, FiUser, FiClipboard, FiLogOut, FiClock, FiX, FiBarChart2,
+  FiTrendingUp, FiClipboard, FiLogOut, FiClock, FiX, FiBarChart2,FiMail,
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,7 @@ const LINKS = {
     { to: '/admin/notifications', label: 'Notifications', icon: <FiBell /> },
     { to: '/admin/events', label: 'Events & Tracking', icon: <FiTrendingUp /> },
     { to: '/admin/gallery', label: 'Gallery', icon: <FiImage /> },
+    { to: '/admin/allowed-emails', label: 'College Emails', icon: <FiMail /> },
     { to: '/admin/users', label: 'All Users', icon: <FiClipboard /> },
     { to: '/admin/analytics', label: 'Analytics', icon: <FiBarChart2 /> },
   ],
@@ -24,6 +25,7 @@ const LINKS = {
     { to: '/president/members', label: 'Members', icon: <FiUsers /> },
     { to: '/president/coordinators', label: 'Coordinators', icon: <FiClipboard /> },
     { to: '/president/club-info', label: 'Club Info', icon: <FiClock /> },
+    { to: '/president/attendance', label: 'Attendance', icon: <FiClock /> },
     { to: '/president/notifications', label: 'Notifications', icon: <FiBell /> },
     { to: '/president/events', label: 'Events & Tracking', icon: <FiTrendingUp /> },
     { to: '/president/gallery', label: 'Gallery', icon: <FiImage /> },
@@ -34,6 +36,7 @@ const LINKS = {
     { to: '/coordinator/attendance', label: 'Attendance', icon: <FiClock /> },
     { to: '/coordinator/club-info', label: 'Club Info', icon: <FiClipboard /> },
     { to: '/coordinator/events', label: 'Events & Tracking', icon: <FiTrendingUp /> },
+    { to: '/coordinator/notifications', label: 'Notifications', icon: <FiBell /> },
     { to: '/coordinator/gallery', label: 'Gallery', icon: <FiImage /> },
   ],
   member: [
@@ -42,13 +45,12 @@ const LINKS = {
     { to: '/member/events', label: 'Events', icon: <FiCalendar /> },
     { to: '/member/participations', label: 'My Participations', icon: <FiTrendingUp /> },
     { to: '/member/gallery', label: 'Gallery', icon: <FiImage /> },
-    { to: '/member/profile', label: 'Profile', icon: <FiUser /> },
   ],
 };
 
 // mobileOpen/onClose let the parent DashboardShell control the off-canvas drawer state
 const DashboardSidebar = ({ role, mobileOpen, onClose }) => {
-  const { logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -68,7 +70,14 @@ const DashboardSidebar = ({ role, mobileOpen, onClose }) => {
             {link.icon} {link.label}
           </NavLink>
         ))}
-        
+
+        {/* Edit profile - the user's own photo sits to the right of the button */}
+        <NavLink to={`/${role}/profile`} className="sidebar-edit">
+          <span>Edit profile</span>
+          <span className="sidebar-avatar">
+            {user?.avatar ? <img src={user.avatar} alt={user.name} /> : (user?.name?.[0] || '?').toUpperCase()}
+          </span>
+        </NavLink>
       </aside>
     </>
   );

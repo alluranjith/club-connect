@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 const seedAdmin = require('./utils/seedAdmin');
+const { syncEventStatuses } = require('./utils/eventStatus');
 
 const authRoutes = require('./routes/authRoutes');
 const clubRoutes = require('./routes/clubRoutes');
@@ -53,6 +54,12 @@ const PORT = process.env.PORT || 5000;
 const start = async () => {
   await connectDB();
   await seedAdmin(); // ensures exactly one admin account exists
+  if ((process.env.OTP_MODE || 'email').toLowerCase() === 'fixed') {
+    console.warn('WARNING: OTP_MODE=fixed - email OTP verification is DISABLED (everyone uses the fixed code). Set OTP_MODE=email for real verification.');
+  }
+  // Keep event statuses (upcoming/ongoing/completed) fresh without manual edits
+  syncEventStatuses().catch((e) => console.error('Event status sync failed:', e.message));
+  setInterval(() => syncEventStatuses().catch((e) => console.error('Event status sync failed:', e.message)), 5 * 60 * 1000);
   app.listen(PORT, () => console.log(`ClubConnect server running on port ${PORT}`));
 };
 

@@ -1,11 +1,14 @@
 const asyncHandler = require('express-async-handler');
 const Event = require('../models/Event');
 const Participation = require('../models/Participation');
+const { syncEventStatuses } = require('../utils/eventStatus');
+const { notifyEvent } = require('../utils/eventNotify');
 
 // @desc  Get all events (public can view too - upcoming/ongoing/completed)
 // @route GET /api/events
 // @access Public
 const getEvents = asyncHandler(async (req, res) => {
+  await syncEventStatuses();
   const filter = {};
   if (req.query.club) filter.club = req.query.club;
   if (req.query.status) filter.status = req.query.status;
@@ -21,13 +24,27 @@ const getEvents = asyncHandler(async (req, res) => {
 // @route GET /api/events/:id
 // @access Public
 const getEvent = asyncHandler(async (req, res) => {
+  await syncEventStatuses();
   const event = await Event.findById(req.params.id)
     .populate('club', 'name')
     .populate('createdBy', 'name role')
-    .populate('participants', 'name email');
+    .lean();
   if (!event) {
     res.status(404);
     throw new Error('Event not found');
+  }
+  // Participant identities are private: only admin / this club's staff get the names.
+  const isStaff =
+    req.user &&
+    (req.user.role === 'admin' ||
+      (['president', 'coordinator'].includes(req.user.role) && String(req.user.club) === String(event.club?._id)));
+  event.participantCount = (event.participants || []).length;
+  event.registered = !!req.user && (event.participants || []).some((id) => String(id) === String(req.user._id));
+  if (isStaff) {
+    const User = require('../models/User');
+    event.participants = await User.find({ _id: { $in: event.participants } }).select('name email').lean();
+  } else {
+    delete event.participants;
   }
   res.json({ success: true, event });
 });
@@ -49,6 +66,7 @@ const createEvent = asyncHandler(async (req, res) => {
     createdBy: req.user._id,
   });
 
+  await notifyEvent(event, 'created', req.user._id);
   res.status(201).json({ success: true, event });
 });
 
@@ -66,8 +84,16 @@ const updateEvent = asyncHandler(async (req, res) => {
     throw new Error('You can only edit events for your own club');
   }
 
-  Object.assign(event, req.body);
+  // Only these fields are editable (never participants / club / createdBy)
+  const before = { date: +new Date(event.date), venue: event.venue || '', status: event.status };
+  ['title', 'description', 'venue', 'date', 'endDate', 'bannerImage', 'status'].forEach((f) => {
+    if (req.body[f] !== undefined) event[f] = req.body[f];
+  });
   await event.save();
+
+  if (event.status === 'cancelled' && before.status !== 'cancelled') await notifyEvent(event, 'cancelled', req.user._id);
+  else if (event.status !== 'cancelled' && (+new Date(event.date) !== before.date || (event.venue || '') !== before.venue)) await notifyEvent(event, 'updated', req.user._id);
+
   res.json({ success: true, event });
 });
 
@@ -84,13 +110,18 @@ const deleteEvent = asyncHandler(async (req, res) => {
     res.status(403);
     throw new Error('You can only delete events for your own club');
   }
+  // Past events are the club's history - they are kept, never deleted.
+  if (event.status === 'completed' || event.status === 'ongoing') {
+    res.status(400);
+    throw new Error('Past and ongoing events are kept as club history and cannot be deleted. You can cancel an upcoming event instead.');
+  }
   await event.deleteOne();
   res.json({ success: true, message: 'Event removed' });
 });
 
 // @desc  Register/participate in an event - any logged-in member (club or non-club)
 // @route POST /api/events/:id/participate
-// @access Private/Member
+// @access Private (any logged-in user)
 const participateInEvent = asyncHandler(async (req, res) => {
   const event = await Event.findById(req.params.id);
   if (!event) {
@@ -98,10 +129,12 @@ const participateInEvent = asyncHandler(async (req, res) => {
     throw new Error('Event not found');
   }
 
-  if (!event.participants.includes(req.user._id)) {
-    event.participants.push(req.user._id);
-    await event.save();
+  if (event.status === 'completed' || event.status === 'cancelled') {
+    res.status(400);
+    throw new Error(`Registration is closed - this event is ${event.status}`);
   }
+
+  await Event.updateOne({ _id: event._id }, { $addToSet: { participants: req.user._id } });
 
   await Participation.findOneAndUpdate(
     { user: req.user._id, event: event._id },
@@ -109,7 +142,7 @@ const participateInEvent = asyncHandler(async (req, res) => {
     { upsert: true, new: true }
   );
 
-  res.json({ success: true, message: 'Registered for event', event });
+  res.json({ success: true, message: 'Registered for event' });
 });
 
 // @desc  Get logged-in user's previous participations

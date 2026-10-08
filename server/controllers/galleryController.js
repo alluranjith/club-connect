@@ -6,7 +6,8 @@ const Gallery = require('../models/Gallery');
 // @access Public
 const getGallery = asyncHandler(async (req, res) => {
   const filter = {};
-  if (req.query.club) filter.club = req.query.club;
+  if (req.query.club === 'none') filter.club = null; // general / platform gallery
+  else if (req.query.club) filter.club = req.query.club;
 
   const images = await Gallery.find(filter)
     .populate('uploadedBy', 'name role')

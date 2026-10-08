@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { FiTrendingUp } from 'react-icons/fi';
 import { EventAPI } from '../../api/endpoints';
 import Loader from '../../components/common/Loader';
+import EventDetailModal from '../../components/common/EventDetailModal';
 import EmptyState from '../../components/common/EmptyState';
 
 // Anyone (club member or not) can register for events, so everyone gets their
 // own participation history here - it isn't gated by club membership status.
 const MemberParticipations = () => {
+  const [openId, setOpenId] = useState(null);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,11 +27,11 @@ const MemberParticipations = () => {
         <EmptyState icon={<FiTrendingUp />} title="No participations yet" subtitle="Register for an event to see it show up here." />
       ) : (
         <div className="table-scroll">
-        <table className="table">
+        <table className="table table-clickable">
           <thead><tr><th>Event</th><th>Date</th><th>Venue</th><th>Attended</th></tr></thead>
           <tbody>
             {records.map((r) => (
-              <tr key={r._id}>
+              <tr key={r._id} onClick={() => r.event && setOpenId(r.event._id)}>
                 <td>{r.event?.title}</td>
                 <td>{r.event ? new Date(r.event.date).toLocaleDateString() : '—'}</td>
                 <td>{r.event?.venue || '—'}</td>
@@ -40,6 +42,7 @@ const MemberParticipations = () => {
         </table>
         </div>
       )}
+      {openId && <EventDetailModal eventId={openId} onClose={() => setOpenId(null)} />}
     </div>
   );
 };

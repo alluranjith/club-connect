@@ -4,6 +4,7 @@ import { FiUser, FiMail, FiPhone, FiEdit2, FiLock } from 'react-icons/fi';
 import { AuthAPI, ClubAPI } from '../../api/endpoints';
 import { useAuth } from '../../context/AuthContext';
 import RoleBadge from '../../components/common/RoleBadge';
+import PasswordRules from '../../components/common/PasswordRules';
 import ImageUploader from '../../components/common/ImageUploader';
 
 const MemberProfile = () => {
@@ -85,11 +86,11 @@ const MemberProfile = () => {
         </div>
         <div className="form-group">
           <label className="form-label"><FiPhone /> Phone</label>
-          <input className="input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <input className="input" required inputMode="numeric" pattern="\d{10}" maxLength={10} title="Exactly 10 digits" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })} />
         </div>
         <div className="form-group">
           <label className="form-label">Bio</label>
-          <textarea className="input" rows={3} value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
+          <textarea className="input" rows={3} maxLength={300} placeholder="Optional - tell clubs about yourself" value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
         </div>
         <button className="btn btn-primary" disabled={savingProfile}><FiEdit2 /> {savingProfile ? 'Saving...' : 'Save changes'}</button>
       </form>
@@ -102,7 +103,8 @@ const MemberProfile = () => {
         </div>
         <div className="form-group">
           <label className="form-label">New password</label>
-          <input type="password" className="input" required minLength={6} value={pwForm.newPassword} onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
+          <input type="password" className="input" required value={pwForm.newPassword} onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
+          <PasswordRules value={pwForm.newPassword} />
         </div>
         <button className="btn btn-secondary" disabled={savingPw}>{savingPw ? 'Updating...' : 'Update password'}</button>
       </form>

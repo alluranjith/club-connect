@@ -6,14 +6,17 @@ import Modal from '../common/Modal';
 import ConfirmDialog from '../common/ConfirmDialog';
 import EmptyState from '../common/EmptyState';
 import Loader from '../common/Loader';
+import EventDetailModal from '../common/EventDetailModal';
+import ImageUploader from '../common/ImageUploader';
 import { useAuth } from '../../context/AuthContext';
 
 const NotificationManager = ({ canPost = true }) => {
+  const [openEventId, setOpenEventId] = useState(null);
   const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ title: '', message: '', type: 'general' });
+  const [form, setForm] = useState({ title: '', message: '', type: 'general', image: '' });
   const [toDelete, setToDelete] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -31,7 +34,7 @@ const NotificationManager = ({ canPost = true }) => {
       await NotificationAPI.create(form);
       toast.success('Notification sent');
       setShowAdd(false);
-      setForm({ title: '', message: '', type: 'general' });
+      setForm({ title: '', message: '', type: 'general', image: '' });
       load();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to send notification');
@@ -63,10 +66,13 @@ const NotificationManager = ({ canPost = true }) => {
       ) : (
         <div className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {items.map((n) => (
-            <div className="card flex-between" key={n._id}>
+            <div className="card notif-card" key={n._id}>
+              {n.image && <img className="notif-image" src={n.image} alt={n.title} />}
+              <div className="flex-between">
               <div>
                 <span className={`badge badge-${n.type === 'event' ? 'success' : 'president'}`}>{n.type}</span>
                 <h4 style={{ margin: '8px 0 4px' }}>{n.title}</h4>
+                {n.event?._id && <button className="btn btn-outline btn-sm" style={{ marginBottom: 8 }} onClick={() => setOpenEventId(n.event._id)}>View event details</button>}
                 <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>{n.message}</p>
                 <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
                   {n.club?.name || 'Platform-wide'} · {new Date(n.createdAt).toLocaleString()}
@@ -75,6 +81,7 @@ const NotificationManager = ({ canPost = true }) => {
               {(user.role === 'admin' || String(n.createdBy?._id) === String(user._id)) && (
                 <button className="btn btn-danger btn-sm" onClick={() => setToDelete(n)}><FiTrash2 /></button>
               )}
+              </div>
             </div>
           ))}
         </div>
@@ -91,6 +98,7 @@ const NotificationManager = ({ canPost = true }) => {
               <label className="form-label">Message</label>
               <textarea className="input" required rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
             </div>
+            <ImageUploader label="Image (optional - text only if left empty)" value={form.image} onChange={(url) => setForm({ ...form, image: url })} />
             <div className="form-group">
               <label className="form-label">Type</label>
               <select className="input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
@@ -106,6 +114,8 @@ const NotificationManager = ({ canPost = true }) => {
           </form>
         </Modal>
       )}
+
+      {openEventId && <EventDetailModal eventId={openEventId} onClose={() => setOpenEventId(null)} />}
 
       {toDelete && (
         <ConfirmDialog

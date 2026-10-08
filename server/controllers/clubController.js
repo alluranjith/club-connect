@@ -2,15 +2,66 @@ const asyncHandler = require('express-async-handler');
 const Club = require('../models/Club');
 const User = require('../models/User');
 const JoinRequest = require('../models/JoinRequest');
+const { isProfileComplete } = require('../utils/profile');
+
+// Only http(s) links are stored (blocks javascript: URLs); bare domains get https:// added.
+const cleanSocialLinks = (links) => {
+  if (!Array.isArray(links)) return [];
+  return links
+    .slice(0, 10)
+    .map((l) => {
+      const name = String(l?.name || '').trim().slice(0, 30);
+      let url = String(l?.url || '').trim().slice(0, 300);
+      if (url && !/^[a-z][a-z0-9+.-]*:/i.test(url)) url = `https://${url}`;
+      return { name, url };
+    })
+    .filter((l) => l.name && /^https?:\/\/\S+$/i.test(l.url));
+};
+
+// Shared guard: admin, or the president of THIS club
+const assertCanManageTeam = (req, res, club) => {
+  if (req.user.role === 'president' && String(req.user.club) !== String(club._id)) {
+    res.status(403);
+    throw new Error('You can only manage the team of your own club');
+  }
+};
+
+// Is this user part of the club (member, president or coordinator)?
+const belongsToClub = (club, userId) =>
+  [club.president, ...(club.coordinators || []), ...(club.members || [])].filter(Boolean).some((id) => String(id) === String(userId));
+
+// Public roster entry: live data from the linked account; contact only if the president allowed it.
+const publicTeam = (team = []) =>
+  team
+    .map((t) => {
+      const u = t.user && t.user._id ? t.user : null;
+      if (t.user && !u) return null; // linked account was deleted
+      if (u && u.isActive === false) return null;
+      const name = u ? u.name : t.name;
+      if (!name) return null;
+      return {
+        _id: t._id,
+        role: t.role,
+        order: t.order,
+        name,
+        image: u ? u.avatar || '' : t.image || '',
+        email: u ? (t.showEmail !== false ? u.email : '') : t.email || '',
+        phone: u ? (t.showPhone ? u.phone || '' : '') : t.phone || '',
+      };
+    })
+    .filter(Boolean);
+
+const cleanRole = (v) => String(v || '').trim().slice(0, 60);
+const cleanOrder = (v) => (Number.isFinite(Number(v)) && v !== '' && v !== null ? Number(v) : 100);
 
 // @desc  Get all active clubs (public)
 // @route GET /api/clubs
 // @access Public
 const getClubs = asyncHandler(async (req, res) => {
   const clubs = await Club.find({ isActive: true })
-    .populate('president', 'name email')
-    .populate('coordinators', 'name email')
-    .select('-members');
+    .populate('president', 'name email avatar')
+    .populate('coordinators', 'name email avatar')
+    .select('-members -team');
   res.json({ success: true, count: clubs.length, clubs });
 });
 
@@ -19,13 +70,18 @@ const getClubs = asyncHandler(async (req, res) => {
 // @access Public
 const getClub = asyncHandler(async (req, res) => {
   const club = await Club.findById(req.params.id)
-    .populate('president', 'name email')
-    .populate('coordinators', 'name email')
-    .populate('members', 'name email');
+    .populate('president', 'name email avatar')
+    .populate('coordinators', 'name email avatar')
+    .populate('team.user', 'name email phone avatar isActive')
+    .lean();
   if (!club) {
     res.status(404);
     throw new Error('Club not found');
   }
+  club.team = publicTeam(club.team);
+  // Public endpoint: expose only the NUMBER of members, never their names/emails.
+  club.memberCount = (club.members || []).length;
+  delete club.members;
   res.json({ success: true, club });
 });
 
@@ -77,6 +133,15 @@ const updateClub = asyncHandler(async (req, res) => {
   if (description !== undefined) club.description = description;
   if (category) club.category = category;
   if (coverImage !== undefined) club.coverImage = coverImage;
+
+  // Only the president (or admin) publishes social links
+  if (req.body.socialLinks !== undefined) {
+    if (!['admin', 'president'].includes(req.user.role)) {
+      res.status(403);
+      throw new Error('Only the president can edit social media links');
+    }
+    club.socialLinks = cleanSocialLinks(req.body.socialLinks);
+  }
 
   await club.save();
   res.json({ success: true, club });
@@ -204,6 +269,136 @@ const removeMember = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Member removed from club', club });
 });
 
+// ---------- Team / role holders (no login needed) ----------
+
+// @desc  Look a person up by email before assigning a role (name/photo/phone are only returned for club members)
+// @route GET /api/clubs/:id/team/lookup?email=
+// @access Private/Admin,President
+const lookupTeamUser = asyncHandler(async (req, res) => {
+  const club = await Club.findById(req.params.id);
+  if (!club) { res.status(404); throw new Error('Club not found'); }
+  assertCanManageTeam(req, res, club);
+  const email = String(req.query.email || '').trim().toLowerCase();
+  if (!email) { res.status(400); throw new Error('Enter an email address'); }
+
+  const u = await User.findOne({ email, isActive: true }).select('name email phone avatar');
+  if (!u) { res.status(404); throw new Error('No registered user found with this email'); }
+
+  const isMember = belongsToClub(club, u._id);
+  res.json({
+    success: true,
+    isMember,
+    // Privacy: non-members only reveal that the account exists (+ first name), never phone/photo
+    user: isMember
+      ? { _id: u._id, name: u.name, email: u.email, phone: u.phone || '', avatar: u.avatar || '' }
+      : { name: u.name.split(' ')[0] },
+    roles: club.team.filter((t) => String(t.user) === String(u._id)).map((t) => t.role),
+  });
+});
+
+// @desc  Team with full details, for the president's management screen
+// @route GET /api/clubs/:id/team
+// @access Private/Admin,President
+const getTeam = asyncHandler(async (req, res) => {
+  const club = await Club.findById(req.params.id).populate('team.user', 'name email phone avatar isActive').lean();
+  if (!club) { res.status(404); throw new Error('Club not found'); }
+  assertCanManageTeam(req, res, club);
+  const team = (club.team || []).map((t) => {
+    const u = t.user && t.user._id ? t.user : null;
+    return {
+      _id: t._id, role: t.role, order: t.order, showEmail: t.showEmail !== false, showPhone: !!t.showPhone,
+      linked: !!u,
+      name: u ? u.name : t.name || '(deleted account)',
+      email: u ? u.email : t.email || '',
+      phone: u ? u.phone || '' : t.phone || '',
+      avatar: u ? u.avatar || '' : t.image || '',
+    };
+  });
+  res.json({ success: true, team });
+});
+
+// @desc  Assign a role to a registered user, found by email
+// @route POST /api/clubs/:id/team   body: { email, role, order, showEmail, showPhone }
+// @access Private/Admin,President
+const addTeamMember = asyncHandler(async (req, res) => {
+  const club = await Club.findById(req.params.id);
+  if (!club) { res.status(404); throw new Error('Club not found'); }
+  assertCanManageTeam(req, res, club);
+
+  const role = cleanRole(req.body.role);
+  if (!role) { res.status(400); throw new Error('Please enter a role'); }
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const u = email ? await User.findOne({ email, isActive: true }) : null;
+  if (!u) { res.status(404); throw new Error('No registered user found with this email'); }
+  if (!belongsToClub(club, u._id)) {
+    res.status(400);
+    throw new Error(`${u.name} is not a member of ${club.name} yet. They need to join the club first.`);
+  }
+  if (club.team.some((t) => String(t.user) === String(u._id) && t.role.toLowerCase() === role.toLowerCase())) {
+    res.status(400);
+    throw new Error(`${u.name} already has the role "${role}"`);
+  }
+  if (club.team.length >= 100) { res.status(400); throw new Error('Team size limit reached (100)'); }
+
+  club.team.push({
+    user: u._id, role, order: cleanOrder(req.body.order),
+    showEmail: req.body.showEmail !== false, showPhone: req.body.showPhone === true,
+  });
+  await club.save();
+  res.status(201).json({ success: true });
+});
+
+// @desc  Change a role holder's role / order / which contact details are public (the person stays the same)
+// @route PUT /api/clubs/:id/team/:memberId
+// @access Private/Admin,President
+const updateTeamMember = asyncHandler(async (req, res) => {
+  const club = await Club.findById(req.params.id);
+  if (!club) { res.status(404); throw new Error('Club not found'); }
+  assertCanManageTeam(req, res, club);
+  const member = club.team.id(req.params.memberId);
+  if (!member) { res.status(404); throw new Error('Team member not found'); }
+
+  const role = cleanRole(req.body.role);
+  if (!role) { res.status(400); throw new Error('Please enter a role'); }
+  member.role = role;
+  member.order = cleanOrder(req.body.order);
+  member.showEmail = req.body.showEmail !== false;
+  member.showPhone = req.body.showPhone === true;
+  await club.save();
+  res.json({ success: true });
+});
+
+// @route DELETE /api/clubs/:id/team/:memberId   @access Private/Admin,President
+const removeTeamMember = asyncHandler(async (req, res) => {
+  const club = await Club.findById(req.params.id);
+  if (!club) { res.status(404); throw new Error('Club not found'); }
+  assertCanManageTeam(req, res, club);
+  club.team = club.team.filter((m) => String(m._id) !== req.params.memberId);
+  await club.save();
+  res.json({ success: true, club });
+});
+
+// @desc  Members of a club with full details (profile + when/why they joined)
+// @route GET /api/clubs/:id/members
+// @access Private/Admin, President (own club)
+const getClubMembers = asyncHandler(async (req, res) => {
+  if (req.user.role !== 'admin' && String(req.user.club) !== String(req.params.id)) {
+    res.status(403);
+    throw new Error('You can only view members of your own club');
+  }
+  const club = await Club.findById(req.params.id).populate('members', 'name email phone avatar bio createdAt isActive').lean();
+  if (!club) { res.status(404); throw new Error('Club not found'); }
+
+  const joins = await JoinRequest.find({ club: club._id, status: 'accepted' }).select('user message decidedAt').lean();
+  const byUser = new Map(joins.map((j) => [String(j.user), j]));
+  const members = (club.members || []).map((m) => ({
+    ...m,
+    joinedAt: byUser.get(String(m._id))?.decidedAt || null,
+    intent: byUser.get(String(m._id))?.message || '',
+  }));
+  res.json({ success: true, club: { _id: club._id, name: club.name }, members });
+});
+
 // ---------- Join Requests ----------
 
 // @desc  Member requests to join a club. A student can be an accepted member of
@@ -229,10 +424,25 @@ const requestToJoin = asyncHandler(async (req, res) => {
     throw new Error('You already have a pending request for this club');
   }
 
+  if (!isProfileComplete(req.user)) {
+    res.status(400);
+    throw new Error('Please complete your profile (name, photo, mobile number) before joining a club');
+  }
+
+  const message = String(req.body.message || '').trim();
+  if (message.length < 10) {
+    res.status(400);
+    throw new Error('Please tell the club briefly why you want to join (at least 10 characters)');
+  }
+  if (message.length > 300) {
+    res.status(400);
+    throw new Error('Your message can be at most 300 characters');
+  }
+
   const joinRequest = await JoinRequest.create({
     user: req.user._id,
     club: club._id,
-    message: req.body.message || '',
+    message,
   });
 
   res.status(201).json({ success: true, joinRequest });
@@ -242,10 +452,13 @@ const requestToJoin = asyncHandler(async (req, res) => {
 // @route GET /api/clubs/:id/join-requests
 // @access Private/Admin,President,Coordinator
 const getJoinRequests = asyncHandler(async (req, res) => {
-  const requests = await JoinRequest.find({ club: req.params.id, status: 'pending' }).populate(
-    'user',
-    'name email phone'
-  );
+  if (req.user.role !== 'admin' && String(req.user.club) !== String(req.params.id)) {
+    res.status(403);
+    throw new Error('You can only view requests for your own club');
+  }
+  const requests = await JoinRequest.find({ club: req.params.id, status: 'pending' })
+    .populate('user', 'name email phone avatar bio createdAt')
+    .sort({ createdAt: -1 });
   res.json({ success: true, requests });
 });
 
@@ -304,6 +517,12 @@ const getMyClubStatus = asyncHandler(async (req, res) => {
 
 module.exports = {
   getClubs,
+  lookupTeamUser,
+  getTeam,
+  getClubMembers,
+  addTeamMember,
+  updateTeamMember,
+  removeTeamMember,
   getClub,
   createClub,
   updateClub,

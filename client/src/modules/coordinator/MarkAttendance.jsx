@@ -1,6 +1,7 @@
+import { downloadFile } from '../../api/download';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { FiDownload, FiCheck } from 'react-icons/fi';
+import { FiDownload, FiCheck, FiX, FiCheckSquare } from 'react-icons/fi';
 import { EventAPI, AttendanceAPI, ExportAPI } from '../../api/endpoints';
 import { useAuth } from '../../context/AuthContext';
 import Loader from '../../components/common/Loader';
@@ -33,6 +34,23 @@ const MarkAttendance = () => {
     setAttendanceMap(map);
   };
 
+  // Everyone who registered: mark all present / all absent in one go
+  const markAll = async (present) => {
+    const next = {};
+    participants.forEach((p) => { next[p._id] = present; });
+    setAttendanceMap(next);
+    try {
+      const res = await AttendanceAPI.markBulk({ eventId: selectedEvent, present });
+      toast.success(`${res.data.updated} marked ${present ? 'present' : 'absent'}`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update attendance');
+      loadEventParticipants(selectedEvent);
+    }
+  };
+
+  const presentCount = participants.filter((p) => attendanceMap[p._id]).length;
+  const rate = participants.length ? Math.round((presentCount / participants.length) * 100) : 0;
+
   const toggle = async (userId, present) => {
     setAttendanceMap((prev) => ({ ...prev, [userId]: present }));
     try {
@@ -48,23 +66,32 @@ const MarkAttendance = () => {
 
   return (
     <div className="animate-fadeIn">
-      <h1 className="section-title">Mark Attendance</h1>
-      <p className="section-subtitle">Select an event to record who attended.</p>
+      <h1 className="section-title">Attendance</h1>
+      <p className="section-subtitle">Select an event to record who attended. Only people who registered for the event are listed.</p>
 
       <div className="form-group" style={{ maxWidth: 380 }}>
         <select className="input" value={selectedEvent} onChange={(e) => loadEventParticipants(e.target.value)}>
           <option value="">Select an event...</option>
-          {events.map((e) => <option key={e._id} value={e._id}>{e.title} — {new Date(e.date).toLocaleDateString()}</option>)}
+          {events.map((e) => <option key={e._id} value={e._id}>{e.title} — {new Date(e.date).toLocaleDateString()} ({e.status})</option>)}
         </select>
       </div>
 
       {selectedEvent && (
         <>
-          <div className="flex-between" style={{ margin: '20px 0 10px' }}>
-            <h3 style={{ margin: 0 }}>Participants ({participants.length})</h3>
-            <a className="btn btn-outline btn-sm" href={ExportAPI.attendanceCsvUrl(selectedEvent)} target="_blank" rel="noreferrer">
+          <div className="stat-strip" style={{ border: '1px solid var(--color-border)', margin: '20px 0' }}>
+            <div><strong>{participants.length}</strong><span>Registered</span></div>
+            <div><strong>{presentCount}</strong><span>Present</span></div>
+            <div><strong>{participants.length - presentCount}</strong><span>Not marked / absent</span></div>
+            <div><strong>{rate}%</strong><span>Attendance rate</span></div>
+          </div>
+          <div className="flex-between" style={{ margin: '0 0 10px', flexWrap: 'wrap', gap: 10 }}>
+            <div className="flex gap-sm">
+              <button className="btn btn-success btn-sm" onClick={() => markAll(true)} disabled={!participants.length}><FiCheckSquare /> Mark all present</button>
+              <button className="btn btn-outline btn-sm" onClick={() => markAll(false)} disabled={!participants.length}><FiX /> Clear all</button>
+            </div>
+            <button className="btn btn-outline btn-sm" onClick={() => downloadFile(ExportAPI.attendanceCsvUrl(selectedEvent), 'attendance.csv')}>
               <FiDownload /> Export attendance
-            </a>
+            </button>
           </div>
 
           {participants.length === 0 ? <EmptyState title="No one has registered for this event yet" /> : (

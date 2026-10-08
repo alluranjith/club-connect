@@ -8,8 +8,10 @@ const AuthBanner = ({ badge, title, description, features = [] }) => (
     <span className="auth-blob auth-blob-2" />
     <span className="auth-blob auth-blob-3" />
     <div className="auth-visual-content">
+    <div class="welcome-row">
       <span className="auth-welcome-badge">{badge}</span>
       <div className="auth-visual-mark"><FiUsers /></div>
+      </div>
       <h2>{title}</h2>
       <p>{description}</p>
       {features.length > 0 && (
