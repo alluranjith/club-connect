@@ -121,7 +121,7 @@ img {
    Layout helpers
    ========================================================= */
 .container {
-  width: 100%;
+  width: 90%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
@@ -492,7 +492,7 @@ img {
 }
 @media (max-width: 480px) {
   .auth-visual-panel { padding: 30px 20px; min-height: 180px; }
-  .auth-visual-mark { width: 44px; height: 44px; font-size: 20px; }
+  .auth-visual-mark { width: 54px; height: 54px; font-size: 20px; }
   .auth-form-panel { padding: 20px 14px; }
   .auth-card { padding: 28px 22px; }
 }
